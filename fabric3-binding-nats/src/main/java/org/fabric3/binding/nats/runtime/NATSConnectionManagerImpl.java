@@ -38,6 +38,7 @@ import org.oasisopen.sca.annotation.Service;
 @Service({NATSConnectionManager.class, DirectConnectionFactory.class})
 public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectConnectionFactory {
     private static final List<Class<?>> TYPES = Arrays.asList(Nats.class, Subscription.class);
+    public static final String DEFAULT_HOST = "nats://localhost:4222";
 
     private Map<URI, Holder> connections = new HashMap<>();
 
@@ -126,7 +127,14 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
 
     @SuppressWarnings("unchecked")
     private Holder createNats(NATSConnectionTarget target) {
-        Nats nats = new NatsConnector().addHost("nats://localhost:4222").connect();
+        NatsConnector connector = new NatsConnector();
+        List<String> hosts = target.getHosts();
+        if (hosts.isEmpty()) {
+            connector.addHost(DEFAULT_HOST);
+        } else {
+            hosts.forEach(connector::addHost);
+        }
+        Nats nats = connector.connect();
         URI channelUri = target.getChannelUri();
         String topic = target.getTopic() != null ? target.getTopic() : target.getDefaultTopic();
         NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
@@ -135,7 +143,13 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
 
     private Holder createNats(NATSConnectionSource source) {
         NatsConnector connector = new NatsConnector();
-        Nats nats = connector.addHost("nats://localhost:4222").connect();
+        List<String> hosts = source.getHosts();
+        if (hosts.isEmpty()) {
+            connector.addHost(DEFAULT_HOST);
+        } else {
+            hosts.forEach(connector::addHost);
+        }
+        Nats nats = connector.connect();
         URI channelUri = source.getChannelUri();
         String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
         NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
