@@ -1,7 +1,7 @@
 package org.fabric3.binding.nats.provision;
 
 import java.net.URI;
-import java.util.Map;
+import java.util.List;
 
 import org.fabric3.spi.model.physical.PhysicalConnectionTarget;
 
@@ -12,13 +12,13 @@ public class NATSConnectionTarget extends PhysicalConnectionTarget {
     private URI channelUri;
     private String defaultTopic;
     private final String serializer;
-    private Map<String, Object> configuration;
+    private List<String> hosts;
 
-    public NATSConnectionTarget(URI channelUri, String defaultTopic, String serializer, Map<String, Object> configuration) {
+    public NATSConnectionTarget(URI channelUri, String defaultTopic, String serializer, List<String> hosts) {
         this.channelUri = channelUri;
         this.defaultTopic = defaultTopic;
         this.serializer = serializer;
-        this.configuration = configuration;
+        this.hosts = hosts;
     }
 
     public URI getChannelUri() {
@@ -29,12 +29,12 @@ public class NATSConnectionTarget extends PhysicalConnectionTarget {
         return defaultTopic;
     }
 
-    public String getSerializer() {
-        return serializer;
+    public List<String> getHosts() {
+        return hosts;
     }
 
-    public Map<String, Object> getConfiguration() {
-        return configuration;
+    public String getSerializer() {
+        return serializer;
     }
 
 }

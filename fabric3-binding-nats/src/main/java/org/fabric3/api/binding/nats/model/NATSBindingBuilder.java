@@ -46,12 +46,6 @@ public class NATSBindingBuilder extends AbstractBuilder {
         return this;
     }
 
-    public NATSBindingBuilder configuration(String key, String value) {
-        checkState();
-        binding.addConfig(key, value);
-        return this;
-    }
-
     public NATSBindingBuilder deserializer(String name) {
         checkState();
         binding.setDeserializer(name);
@@ -61,6 +55,12 @@ public class NATSBindingBuilder extends AbstractBuilder {
     public NATSBindingBuilder serializer(String name) {
         checkState();
         binding.setSerializer(name);
+        return this;
+    }
+
+    public NATSBindingBuilder host(String host) {
+        checkState();
+        binding.addHost(host);
         return this;
     }
 

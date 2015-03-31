@@ -20,8 +20,8 @@
 package org.fabric3.api.binding.nats.model;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.fabric3.api.model.type.component.Binding;
 
@@ -29,7 +29,7 @@ import org.fabric3.api.model.type.component.Binding;
  * Binds a channel to a NATS cluster.
  */
 public class NATSBinding extends Binding {
-    private Map<String, Object> configuration = new HashMap<>();
+    private List<String> hosts = new ArrayList<>();
     private String defaultTopic;
     private String deserializer;
     private String serializer;
@@ -42,8 +42,8 @@ public class NATSBinding extends Binding {
         return defaultTopic;
     }
 
-    public Map<String, Object> getConfiguration() {
-        return configuration;
+    public List<String> getHosts() {
+        return hosts;
     }
 
     public String getDeserializer() {
@@ -58,20 +58,19 @@ public class NATSBinding extends Binding {
         defaultTopic = topic;
     }
 
-    void addConfig(String key, String value) {
-        configuration.put(key, value);
-    }
-
     void setTarget(URI uri) {
         targetUri = uri;
     }
 
-    public void setDeserializer(String deserializer) {
+    void setDeserializer(String deserializer) {
         this.deserializer = deserializer;
     }
 
-    public void setSerializer(String serializer) {
+    void setSerializer(String serializer) {
         this.serializer = serializer;
     }
 
+    void addHost(String host) {
+        hosts.add(host);
+    }
 }
