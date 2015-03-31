@@ -1,0 +1,4 @@
+rootProject.name = 'fabric3-nats'
+
+include 'fabric3-binding-nats', 'test-nats'
+
