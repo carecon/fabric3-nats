@@ -43,7 +43,7 @@ public class TestClient {
     public void testProduce() throws Exception {
         if (true) {
             Thread.sleep(1000);
-            System.out.println("********** No connection to NATS. Skipping tests.");
+            System.out.println("********** Tests disabled. Skipping tests.");
             return;
         }
         Object handle = channelContext.subscribe(String.class, "id", "test", m -> {
