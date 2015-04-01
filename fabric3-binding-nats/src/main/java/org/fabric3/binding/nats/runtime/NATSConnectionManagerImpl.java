@@ -90,12 +90,15 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         String deserializerName = source.getDeserializer();
         Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
 
-        nats.subscribe(topic, message -> {
+        Subscription subscription = nats.subscribe(topic, message -> {
             Object body = deserializer != null ? deserializer.apply(message.getBody()) : message.getBody();
             connection.getEventStream().getHeadHandler().handle(body, false);
         });
         // set the closeable callback
-        connection.setCloseable(() -> release(channelUri));
+        connection.setCloseable(() -> {
+            subscription.close();
+            release(channelUri);
+        });
     }
 
     @SuppressWarnings("unchecked")
