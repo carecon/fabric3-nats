@@ -23,7 +23,6 @@ public class NATSConnectionTargetAttacher implements TargetConnectionAttacher<NA
     @Reference
     protected ComponentManager cm;
 
-
     @Reference
     protected NATSConnectionManager connectionManager;
 
@@ -39,11 +38,12 @@ public class NATSConnectionTargetAttacher implements TargetConnectionAttacher<NA
                 String serialized = serializer != null ? serializer.apply(event) : event.toString();
                 nats.publish(topic, serialized);
             });
-            connection.setCloseable(() -> connectionManager.release(target.getChannelUri()));
+            connection.setCloseable(() -> connectionManager.release(target.getChannelUri(), topic));
         }
     }
 
     public void detach(PhysicalConnectionSource source, NATSConnectionTarget target) {
-        connectionManager.release(target.getChannelUri());
+        String topic = target.getTopic() != null ? target.getTopic() : target.getDefaultTopic();
+        connectionManager.release(target.getChannelUri(), topic);
     }
 }

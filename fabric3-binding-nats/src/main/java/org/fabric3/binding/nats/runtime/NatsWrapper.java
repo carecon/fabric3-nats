@@ -32,7 +32,7 @@ public class NatsWrapper implements Nats {
     }
 
     public void close() {
-        connectionManager.release(channelUri);
+        connectionManager.release(channelUri, null);
     }
 
     public void publish(String subject) {

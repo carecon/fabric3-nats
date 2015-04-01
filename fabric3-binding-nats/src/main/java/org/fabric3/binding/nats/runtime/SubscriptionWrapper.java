@@ -16,17 +16,19 @@ import nats.client.Subscription;
 public class SubscriptionWrapper implements Subscription {
     private Subscription delegate;
     private URI channelUri;
+    private String topic;
     private NATSConnectionManager connectionManager;
 
-    public SubscriptionWrapper(Subscription delegate, URI channelUri, NATSConnectionManager connectionManager) {
+    public SubscriptionWrapper(Subscription delegate, URI channelUri, String topic, NATSConnectionManager connectionManager) {
         this.delegate = delegate;
         this.channelUri = channelUri;
+        this.topic = topic;
         this.connectionManager = connectionManager;
     }
 
     public void close() {
         delegate.close();
-        connectionManager.release(channelUri);
+        connectionManager.release(channelUri, topic);
     }
 
     public String getSubject() {

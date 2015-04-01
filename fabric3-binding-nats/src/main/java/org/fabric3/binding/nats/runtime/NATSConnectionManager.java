@@ -24,8 +24,9 @@ public interface NATSConnectionManager {
      * Releases resources used by a channel.
      *
      * @param channelUri the channel uri
+     * @param topic      the topic or null if not available
      */
-    void release(URI channelUri);
+    void release(URI channelUri, String topic);
 
     /**
      * Creates a direct consumer connection.

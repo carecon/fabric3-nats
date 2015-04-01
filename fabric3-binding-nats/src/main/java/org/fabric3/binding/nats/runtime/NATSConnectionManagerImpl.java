@@ -3,8 +3,10 @@ package org.fabric3.binding.nats.runtime;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -65,8 +67,8 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         return connections.computeIfAbsent(target.getChannelUri(), (s) -> createNats(target)).delegate;
     }
 
-    public void release(URI channelUri) {
-        release(channelUri, true);
+    public void release(URI channelUri, String topic) {
+        release(channelUri, topic, true);
     }
 
     public <T> T createDirectConsumer(Class<T> type, NATSConnectionSource source) {
@@ -76,7 +78,8 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         } else if (Subscription.class.isAssignableFrom(type)) {
             Nats nats = connections.computeIfAbsent(channelUri, (s) -> createNats(source)).delegate;
             String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
-            return Cast.cast(new SubscriptionWrapper(nats.subscribe(topic), channelUri, this));
+            Subscription subscription = nats.subscribe(topic);
+            return Cast.cast(new SubscriptionWrapper(subscription, channelUri, topic, this));
         } else {
             throw new Fabric3Exception("Invalid consumer type: " + type.getName());
         }
@@ -86,19 +89,41 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
     public void subscribe(NATSConnectionSource source, ChannelConnection connection) {
         URI channelUri = source.getChannelUri();
         String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
-        Nats nats = connections.computeIfAbsent(channelUri, (s) -> createNats(source)).delegate;
-        String deserializerName = source.getDeserializer();
-        Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
 
-        Subscription subscription = nats.subscribe(topic, message -> {
-            Object body = deserializer != null ? deserializer.apply(message.getBody()) : message.getBody();
-            connection.getEventStream().getHeadHandler().handle(body, false);
-        });
-        // set the closeable callback
-        connection.setCloseable(() -> {
-            subscription.close();
-            release(channelUri);
-        });
+        Holder holder = connections.get(channelUri);
+
+        boolean exists = holder != null;
+
+        // only create the subscription
+        Nats nats;
+        if (!exists) {
+            holder = createNats(source);
+        } else {
+            holder.counter++;
+        }
+        nats = holder.delegate;
+
+        if (!exists || !holder.topics.contains(topic)) {
+            String deserializerName = source.getDeserializer();
+            Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
+
+            connections.put(channelUri, holder);
+            Subscription subscription = nats.subscribe(topic, message -> {
+                Object body = deserializer != null ? deserializer.apply(message.getBody()) : message.getBody();
+                connection.getEventStream().getHeadHandler().handle(body, false);
+            });
+
+            // set the closeable callback
+            connection.setCloseable(() -> {
+                subscription.close();
+                release(channelUri, topic);
+            });
+            holder.topics.add(topic);
+        } else {
+            connection.setCloseable(() -> {
+                release(channelUri, topic);
+            });
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -108,7 +133,10 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
             return () -> Cast.cast(connections.get(channelUri).delegate);
         } else if (Subscription.class.isAssignableFrom(type)) {
             Holder holder = connections.get(channelUri);
-            return () -> Cast.cast(new SubscriptionWrapper(holder.delegate.subscribe(holder.topic), channelUri, this));
+            return () -> {
+                Subscription subscription = holder.delegate.subscribe(holder.topic);
+                return Cast.cast(new SubscriptionWrapper(subscription, channelUri, holder.topic, this));
+            };
         } else {
             throw new Fabric3Exception("Invalid connection type: " + type.getName());
         }
@@ -151,7 +179,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         return new Holder(wrapper, topic);
     }
 
-    private Nats release(URI channelUri, boolean shutdown) {
+    private Nats release(URI channelUri, String topic, boolean shutdown) {
         Holder holder = connections.get(channelUri);
         if (holder == null) {
             return null;
@@ -159,6 +187,9 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         if (--holder.counter == 0) {
             if (shutdown) {
                 holder.delegate.close();
+            }
+            if (topic != null) {
+                holder.topics.remove(topic);
             }
             connections.remove(channelUri);
         }
@@ -169,6 +200,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         NatsWrapper delegate;
         int counter = 1;
         String topic;
+        Set<String> topics = new HashSet<>();
 
         public Holder(NatsWrapper delegate, String topic) {
             this.delegate = delegate;
