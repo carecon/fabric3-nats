@@ -104,6 +104,8 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         nats = holder.delegate;
 
         if (!exists || !holder.topics.contains(topic)) {
+            // Only create a subscription if one does not exist; otherwise targets will receive duplicate messages as multiple subscriptions will feed
+            // into the channel event stream
             String deserializerName = source.getDeserializer();
             Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
 
