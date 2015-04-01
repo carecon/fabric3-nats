@@ -19,9 +19,7 @@ import org.fabric3.binding.nats.provision.NATSConnectionSource;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
 import org.fabric3.spi.container.builder.component.DirectConnectionFactory;
 import org.fabric3.spi.container.channel.ChannelConnection;
-import org.fabric3.spi.container.component.Component;
 import org.fabric3.spi.container.component.ComponentManager;
-import org.fabric3.spi.container.component.ScopedComponent;
 import org.fabric3.spi.runtime.event.EventService;
 import org.fabric3.spi.runtime.event.RuntimeStart;
 import org.fabric3.spi.util.Cast;
@@ -38,7 +36,7 @@ import org.oasisopen.sca.annotation.Service;
 @Service({NATSConnectionManager.class, DirectConnectionFactory.class})
 public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectConnectionFactory {
     private static final List<Class<?>> TYPES = Arrays.asList(Nats.class, Subscription.class);
-    public static final String DEFAULT_HOST = "nats://localhost:4222";
+    private static final String DEFAULT_HOST = "nats://localhost:4222";
 
     private Map<URI, Holder> connections = new HashMap<>();
 
@@ -101,8 +99,12 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         URI channelUri = source.getChannelUri();
         String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
         Nats nats = connections.computeIfAbsent(channelUri, (s) -> createNats(source)).delegate;
+        String deserializerName = source.getDeserializer();
+        Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
+
         nats.subscribe(topic, message -> {
-            connection.getEventStream().getHeadHandler().handle(message.getBody(), false);
+            Object body = deserializer != null ? deserializer.apply(message.getBody()) : message.getBody();
+            connection.getEventStream().getHeadHandler().handle(body, false);
         });
         // set the closeable callback
         connection.getEventStream().setCloseable(() -> release(channelUri));
@@ -168,23 +170,6 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
             connections.remove(channelUri);
         }
         return holder.delegate;
-    }
-
-    private Function getInstance(String name) {
-        URI serializerUri = URI.create(info.getDomain().toString() + "/" + name);
-        Component component = cm.getComponent(serializerUri);
-        if (component == null) {
-            throw new Fabric3Exception("Component not found: " + name);
-        }
-        if (!(component instanceof ScopedComponent)) {
-            throw new Fabric3Exception("Component must be a Java component: " + name);
-        }
-        ScopedComponent scopedComponent = (ScopedComponent) component;
-        Object instance = scopedComponent.getInstance();
-        if (!(instance instanceof Function)) {
-            throw new Fabric3Exception("Serializer must implement: " + Function.class.getName());
-        }
-        return (Function) instance;
     }
 
     private class Holder {
