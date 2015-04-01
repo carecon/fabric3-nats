@@ -1,7 +1,6 @@
 package org.fabric3.binding.nats.runtime;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +19,6 @@ import org.fabric3.binding.nats.provision.NATSConnectionTarget;
 import org.fabric3.spi.container.builder.component.DirectConnectionFactory;
 import org.fabric3.spi.container.channel.ChannelConnection;
 import org.fabric3.spi.container.component.ComponentManager;
-import org.fabric3.spi.runtime.event.EventService;
-import org.fabric3.spi.runtime.event.RuntimeStart;
 import org.fabric3.spi.util.Cast;
 import org.oasisopen.sca.annotation.Destroy;
 import org.oasisopen.sca.annotation.EagerInit;
@@ -47,19 +44,10 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
     protected ComponentManager cm;
 
     @Reference
-    protected EventService eventService;
-
-    @Reference
     protected ExecutorService executorService;
-
-    private List<Runnable> queuedSubscriptions = new ArrayList<>();
 
     @Init
     public void init() {
-        eventService.subscribe(RuntimeStart.class, (event) -> {
-            queuedSubscriptions.forEach(executorService::submit);
-            queuedSubscriptions.clear();
-        });
     }
 
     @Destroy
@@ -136,6 +124,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         } else {
             hosts.forEach(connector::addHost);
         }
+        connector.calllbackExecutor(executorService);
         Nats nats = connector.connect();
         URI channelUri = target.getChannelUri();
         String topic = target.getTopic() != null ? target.getTopic() : target.getDefaultTopic();
@@ -151,6 +140,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         } else {
             hosts.forEach(connector::addHost);
         }
+        connector.calllbackExecutor(executorService);
         Nats nats = connector.connect();
         URI channelUri = source.getChannelUri();
         String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
