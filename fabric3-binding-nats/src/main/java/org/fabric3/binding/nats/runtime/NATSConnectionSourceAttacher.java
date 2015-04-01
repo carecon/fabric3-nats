@@ -17,12 +17,12 @@ public class NATSConnectionSourceAttacher implements SourceConnectionAttacher<NA
     protected NATSConnectionManager connectionManager;
 
     public void attach(NATSConnectionSource source, PhysicalConnectionTarget target, ChannelConnection connection) {
+        connection.setCloseable(() -> connectionManager.release(source.getChannelUri()));
         if (target.isDirectConnection()) {
             Class<?> type = target.getServiceInterface();
             connectionManager.createDirectConsumer(type, source); // create consumer, which will be returned by the direct connection factory
         } else {
             connectionManager.subscribe(source, connection);
-            connection.getEventStream().setCloseable(() -> connectionManager.release(source.getChannelUri()));
         }
     }
 

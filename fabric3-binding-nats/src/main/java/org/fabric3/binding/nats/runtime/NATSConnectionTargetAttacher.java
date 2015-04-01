@@ -39,7 +39,7 @@ public class NATSConnectionTargetAttacher implements TargetConnectionAttacher<NA
                 String serialized = serializer != null ? serializer.apply(event) : event.toString();
                 nats.publish(topic, serialized);
             });
-            connection.getEventStream().setCloseable(() -> connectionManager.release(target.getChannelUri()));
+            connection.setCloseable(() -> connectionManager.release(target.getChannelUri()));
         }
     }
 

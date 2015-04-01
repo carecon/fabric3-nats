@@ -95,7 +95,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
             connection.getEventStream().getHeadHandler().handle(body, false);
         });
         // set the closeable callback
-        connection.getEventStream().setCloseable(() -> release(channelUri));
+        connection.setCloseable(() -> release(channelUri));
     }
 
     @SuppressWarnings("unchecked")
