@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -18,6 +19,7 @@ import org.fabric3.api.host.Fabric3Exception;
 import org.fabric3.api.host.runtime.HostInfo;
 import org.fabric3.binding.nats.provision.NATSConnectionSource;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
+import org.fabric3.binding.nats.provision.NATSData;
 import org.fabric3.spi.container.builder.component.DirectConnectionFactory;
 import org.fabric3.spi.container.channel.ChannelConnection;
 import org.fabric3.spi.container.component.ComponentManager;
@@ -151,14 +153,8 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
     @SuppressWarnings("unchecked")
     private Holder createNats(NATSConnectionTarget target) {
         NatsConnector connector = new NatsConnector();
-        List<String> hosts = target.getHosts();
-        if (hosts.isEmpty()) {
-            connector.addHost(DEFAULT_HOST);
-        } else {
-            hosts.forEach(connector::addHost);
-        }
-        connector.calllbackExecutor(executorService);
-        Nats nats = connector.connect();
+        NATSData natsData = target.getData();
+        Nats nats = populateNats(connector, natsData);
         URI channelUri = target.getChannelUri();
         String topic = target.getTopic() != null ? target.getTopic() : target.getDefaultTopic();
         NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
@@ -167,18 +163,29 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
 
     private Holder createNats(NATSConnectionSource source) {
         NatsConnector connector = new NatsConnector();
-        List<String> hosts = source.getHosts();
+
+        NATSData natsData = source.getData();
+        Nats nats = populateNats(connector, natsData);
+
+        URI channelUri = source.getChannelUri();
+        String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
+        NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
+        return new Holder(wrapper, topic);
+    }
+
+    private Nats populateNats(NatsConnector connector, NATSData natsData) {
+        List<String> hosts = natsData.getHosts();
         if (hosts.isEmpty()) {
             connector.addHost(DEFAULT_HOST);
         } else {
             hosts.forEach(connector::addHost);
         }
         connector.calllbackExecutor(executorService);
-        Nats nats = connector.connect();
-        URI channelUri = source.getChannelUri();
-        String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
-        NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
-        return new Holder(wrapper, topic);
+        connector.automaticReconnect(natsData.isAutomaticReconnect());
+        connector.maxFrameSize(natsData.getMaxFrameSize());
+        connector.pedantic(natsData.isPedantic());
+        connector.reconnectWaitTime(natsData.getReconnectWaitTime(), TimeUnit.MILLISECONDS);
+        return connector.connect();
     }
 
     private Nats release(URI channelUri, String topic, boolean shutdown) {

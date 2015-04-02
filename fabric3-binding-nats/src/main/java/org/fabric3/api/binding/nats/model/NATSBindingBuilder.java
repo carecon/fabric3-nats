@@ -64,6 +64,36 @@ public class NATSBindingBuilder extends AbstractBuilder {
         return this;
     }
 
+    public NATSBindingBuilder automaticReconnect(boolean value) {
+        checkState();
+        binding.setAutomaticReconnect(value);
+        return this;
+    }
+
+    /**
+     * Sets the wait time in milliseconds
+     *
+     * @param time the time in milliseconds
+     * @return the time in milliseconds
+     */
+    public NATSBindingBuilder reconnectWaitTime(long time) {
+        checkState();
+        binding.setReconnectWaitTime(time);
+        return this;
+    }
+
+    public NATSBindingBuilder pedantic(boolean pedantic) {
+        checkState();
+        binding.setPedantic(pedantic);
+        return this;
+    }
+
+    public NATSBindingBuilder maxFrameSize(int size) {
+        checkState();
+        binding.setMaxFrameSize(size);
+        return this;
+    }
+
     public NATSBinding build() {
         checkState();
         freeze();

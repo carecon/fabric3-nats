@@ -34,6 +34,12 @@ public class NATSBinding extends Binding {
     private String deserializer;
     private String serializer;
 
+    // following values are defaults from the NATS client
+    private boolean automaticReconnect = true;
+    private long reconnectWaitTime = 2000;
+    private boolean pedantic = false;
+    private int maxFrameSize = 1048576;
+
     public NATSBinding() {
         super("nats", null, "binding.nats");
     }
@@ -54,6 +60,22 @@ public class NATSBinding extends Binding {
         return serializer;
     }
 
+    public boolean isAutomaticReconnect() {
+        return automaticReconnect;
+    }
+
+    public long getReconnectWaitTime() {
+        return reconnectWaitTime;
+    }
+
+    public boolean isPedantic() {
+        return pedantic;
+    }
+
+    public int getMaxFrameSize() {
+        return maxFrameSize;
+    }
+
     void setDefaultTopic(String topic) {
         defaultTopic = topic;
     }
@@ -72,5 +94,25 @@ public class NATSBinding extends Binding {
 
     void addHost(String host) {
         hosts.add(host);
+    }
+
+     void setHosts(List<String> hosts) {
+        this.hosts = hosts;
+    }
+
+     void setAutomaticReconnect(boolean automaticReconnect) {
+        this.automaticReconnect = automaticReconnect;
+    }
+
+     void setReconnectWaitTime(long reconnectWaitTime) {
+        this.reconnectWaitTime = reconnectWaitTime;
+    }
+
+     void setPedantic(boolean pedantic) {
+        this.pedantic = pedantic;
+    }
+
+     void setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSize = maxFrameSize;
     }
 }
