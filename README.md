@@ -22,6 +22,7 @@ See docs.fabric3.org or test-nats for examples of using the NATS binding.
 
 The NATS monitor appender is configured as follows in the Fabric3 systemConfig.xml:
 
+```xml
 <config ...>
    <monitor>
       <appenders>
@@ -29,6 +30,7 @@ The NATS monitor appender is configured as follows in the Fabric3 systemConfig.x
       </appenders>
    </monitor>
 </config>
+```
 
 The 'hosts' attribute is a comma-separated list of NATS broker addresses (if not specified, the default NATS localhost address will be used). The hosts
 attribute can also accept environment variables in the form: ${var1}. The JVM properties will first be searched followed by OS environment variables.
