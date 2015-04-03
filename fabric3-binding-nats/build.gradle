@@ -3,6 +3,9 @@ apply plugin: 'fabric3-contribution'
 dependencies {
 
     providedCompile group: fabric3Group, name: 'fabric3-spi', version: fabric3Version
+    providedCompile group: fabric3Group, name: 'fabric3-monitor-spi', version: fabric3Version
+
+    compile group: fabric3Group, name: 'fabric3-monitor-log', version: fabric3Version
 
     compile (group: 'com.github.cloudfoundry-community', name: 'nats-client', version: natsVersion) {
         exclude module: 'jackson-databind'

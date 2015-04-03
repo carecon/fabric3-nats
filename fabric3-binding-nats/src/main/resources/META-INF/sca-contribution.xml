@@ -4,7 +4,10 @@
               f3:extension="true"
               f3:description="NATS binding extension">
     <import.java package="org.fabric3.spi.*"/>
+    <import.java package="org.fabric3.monitor.spi.*"/>
     <import.java package="com.fasterxml.jackson.*" version="2.4.3"/>
     <export.java package="org.fabric3.api.binding.nats.*" version="3.0.0"/>
+
+    <f3:provides.capability name="monitor.appender"/>
 
 </contribution>
