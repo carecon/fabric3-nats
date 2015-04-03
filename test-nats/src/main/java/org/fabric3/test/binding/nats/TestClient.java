@@ -41,7 +41,7 @@ public class TestClient {
 
     @Test
     public void testProduce() throws Exception {
-        if (false) {
+        if (true) {
             Thread.sleep(1000);
             System.out.println("********** Tests disabled. Skipping tests.");
             return;
