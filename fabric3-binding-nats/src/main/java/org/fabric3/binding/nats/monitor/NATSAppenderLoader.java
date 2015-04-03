@@ -21,6 +21,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.util.Arrays;
 
+import org.fabric3.api.MonitorChannel;
+import org.fabric3.api.annotation.monitor.Monitor;
 import org.fabric3.api.host.runtime.HostInfo;
 import org.fabric3.spi.introspection.IntrospectionContext;
 import org.fabric3.spi.introspection.xml.AbstractValidatingTypeLoader;
@@ -45,12 +47,15 @@ import org.oasisopen.sca.annotation.Reference;
 public class NATSAppenderLoader extends AbstractValidatingTypeLoader<NATSAppenderDefinition> {
     private static final QName SCA_TYPE = new QName(Constants.SCA_NS, "appender.nats");
     private static final QName F3_TYPE = new QName(org.fabric3.api.Namespaces.F3, "appender.nats");
+    public static final String NATS_DEFAULT = "nats://localhost:4222";
 
     private LoaderRegistry registry;
     private HostInfo hostInfo;
+    private MonitorChannel monitor;
 
-    public NATSAppenderLoader(@Reference LoaderRegistry registry, @Reference HostInfo hostInfo) {
+    public NATSAppenderLoader(@Reference LoaderRegistry registry, @Reference HostInfo hostInfo, @Monitor MonitorChannel monitor) {
         this.hostInfo = hostInfo;
+        this.monitor = monitor;
         addAttributes("hosts", "topic");
         this.registry = registry;
     }
@@ -70,19 +75,45 @@ public class NATSAppenderLoader extends AbstractValidatingTypeLoader<NATSAppende
 
     public NATSAppenderDefinition load(XMLStreamReader reader, IntrospectionContext context) throws XMLStreamException {
         validateAttributes(reader, context);
+        String[] hosts = parseHosts(reader);
+        String topic = parseTopic(reader);
+        return new NATSAppenderDefinition(topic, Arrays.asList(hosts));
+    }
+
+    private String[] parseHosts(XMLStreamReader reader) {
         String value = reader.getAttributeValue(null, "hosts");
-        String[] hosts = value == null ? new String[]{"nats://localhost:4222"} : value.split(",");
+        String[] hosts = value == null ? new String[]{NATS_DEFAULT} : value.split(",");
+        if (hosts.length == 1 && hosts[0].startsWith("${") && hosts[0].endsWith("}")) {
+            String host = hosts[0];
+            String key = host.substring(2, host.length() - 1);
+            String val = System.getProperty(key, System.getenv(key));
+            if (val == null) {
+                monitor.severe("NATS appender host variable not defined {0}. Using the default NATS host address.", host);
+                return new String[]{NATS_DEFAULT};
+            } else {
+                return expandProtocol(val.split(","));
+            }
+
+        }
+        return expandProtocol(hosts);
+    }
+
+    private String[] expandProtocol(String[] hosts) {
         for (int i = 0; i < hosts.length; i++) {
             if (!hosts[i].startsWith("nats://")) {
                 hosts[i] = "nats://" + hosts[i];
             }
         }
+        return hosts;
+    }
+
+    private String parseTopic(XMLStreamReader reader) {
         String topic = reader.getAttributeValue(null, "topic");
         if (topic == null) {
             topic = "fabric3";
         } else if ("#domain".equals(topic)) {
             topic = hostInfo.getDomain().getAuthority() + "." + hostInfo.getRuntimeName();
         }
-        return new NATSAppenderDefinition(topic, Arrays.asList(hosts));
+        return topic;
     }
 }
