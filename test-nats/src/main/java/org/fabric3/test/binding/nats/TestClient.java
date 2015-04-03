@@ -41,13 +41,13 @@ public class TestClient {
 
     @Test
     public void testProduce() throws Exception {
-        if (true) {
+        if (false) {
             Thread.sleep(1000);
             System.out.println("********** Tests disabled. Skipping tests.");
             return;
         }
         Object handle = channelContext.subscribe(String.class, "id", "test", m -> {
-            System.out.println("Received in subscribe:" + m + ":" + m.hashCode());
+            System.out.println("Received in subscribe:" + m);
             SUBSCRIBE_LATCH.countDown();
         });
 
@@ -62,8 +62,8 @@ public class TestClient {
             DYNAMIC_LATCH.countDown();
         });
 
-        channel.publish("hello");
-        producer.publish("test", "hello2");
+        channel.publish("\"hello\"");
+        producer.publish("test", "\"hello2\"");
 
         RECEIVE_LATCH.await();
         SUBSCRIBE_LATCH.await();

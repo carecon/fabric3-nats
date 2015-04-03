@@ -26,25 +26,21 @@ public class NATSConnectionBindingGenerator implements ConnectionBindingGenerato
     public PhysicalConnectionSource generateConnectionSource(LogicalConsumer consumer, LogicalBinding<NATSBinding> binding, DeliveryType deliveryType) {
         NATSBinding natsBinding = binding.getDefinition();
         URI channelUri = binding.getParent().getUri();
-        URI consumerUri = consumer.getUri();
         String defaultTopic = natsBinding.getDefaultTopic();
-        String deserializer = natsBinding.getDeserializer();
 
         NATSData natsData = generateData(natsBinding);
 
-        return new NATSConnectionSource(channelUri, consumerUri, defaultTopic, deserializer, natsData);
-
+        return new NATSConnectionSource(channelUri, defaultTopic, natsData);
     }
 
     public PhysicalConnectionTarget generateConnectionTarget(LogicalProducer producer, LogicalBinding<NATSBinding> binding, DeliveryType deliveryType) {
         NATSBinding natsBinding = binding.getDefinition();
-        String serializer = natsBinding.getSerializer();
         URI channelUri = binding.getParent().getUri();
         String defaultTopic = natsBinding.getDefaultTopic();
 
         NATSData natsData = generateData(natsBinding);
 
-        return new NATSConnectionTarget(channelUri, defaultTopic, serializer, natsData);
+        return new NATSConnectionTarget(channelUri, defaultTopic, natsData);
     }
 
     private NATSData generateData(NATSBinding binding) {
@@ -54,6 +50,10 @@ public class NATSConnectionBindingGenerator implements ConnectionBindingGenerato
         builder.maxFrameSize(binding.getMaxFrameSize());
         builder.pedantic(binding.isPedantic());
         builder.reconnectWaitTime(binding.getReconnectWaitTime());
+        String serializer = binding.getSerializer();
+        builder.serializer(serializer);
+        String deserializer = binding.getDeserializer();
+        builder.deserializer(deserializer);
         return builder.build();
     }
 }

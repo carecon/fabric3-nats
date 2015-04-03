@@ -20,6 +20,8 @@ dependencies {
     compile group: fabric3Group, name: 'fabric3-model-api', version: fabric3Version
     compile group: fabric3Group, name: 'fabric3-junit-api', version: fabric3Version
 
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.4.3'
+
 }
 
 fabric3Test {

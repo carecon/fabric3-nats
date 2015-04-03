@@ -31,7 +31,7 @@ public class NATSConnectionTargetAttacher implements TargetConnectionAttacher<NA
         Nats nats = connectionManager.getNats(target);
         if (!source.isDirectConnection()) {
             String topic = target.getTopic() != null ? target.getTopic() : target.getDefaultTopic();
-            String serializerName = target.getSerializer();
+            String serializerName = target.getData().getSerializer();
             Function<Object, String> serializer = serializerName != null ? InstanceResolver.getInstance(serializerName, info, cm) : null;
 
             connection.getEventStream().addHandler((event, batch) -> {

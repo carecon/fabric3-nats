@@ -10,6 +10,8 @@ public class NATSData {
     private long reconnectWaitTime;
     private boolean pedantic;
     private int maxFrameSize;
+    private String serializer;
+    private String deserializer;
 
     private List<String> hosts;
 
@@ -31,6 +33,14 @@ public class NATSData {
 
     public List<String> getHosts() {
         return hosts;
+    }
+
+    public String getSerializer() {
+        return serializer;
+    }
+
+    public String getDeserializer() {
+        return deserializer;
     }
 
     void setHosts(List<String> hosts) {
@@ -93,8 +103,18 @@ public class NATSData {
             return this;
         }
 
+        public Builder serializer(String serializer) {
+            data.serializer = serializer;
+            return this;
+        }
+
+        public Builder deserializer(String deserializer) {
+            data.deserializer = deserializer;
+            return this;
+        }
+
         private Builder() {
-           data = new NATSData();
+            data = new NATSData();
         }
 
     }

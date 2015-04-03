@@ -9,20 +9,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import nats.client.Nats;
 import nats.client.NatsConnector;
 import nats.client.Subscription;
 import org.fabric3.api.host.Fabric3Exception;
-import org.fabric3.api.host.runtime.HostInfo;
 import org.fabric3.binding.nats.provision.NATSConnectionSource;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
 import org.fabric3.binding.nats.provision.NATSData;
 import org.fabric3.spi.container.builder.component.DirectConnectionFactory;
 import org.fabric3.spi.container.channel.ChannelConnection;
-import org.fabric3.spi.container.component.ComponentManager;
 import org.fabric3.spi.util.Cast;
 import org.oasisopen.sca.annotation.Destroy;
 import org.oasisopen.sca.annotation.EagerInit;
@@ -40,12 +37,6 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
     private static final String DEFAULT_HOST = "nats://localhost:4222";
 
     private Map<URI, Holder> connections = new HashMap<>();
-
-    @Reference
-    protected HostInfo info;
-
-    @Reference
-    protected ComponentManager cm;
 
     @Reference
     protected ExecutorService executorService;
@@ -108,13 +99,9 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         if (!exists || !holder.topics.contains(topic)) {
             // Only create a subscription if one does not exist; otherwise targets will receive duplicate messages as multiple subscriptions will feed
             // into the channel event stream
-            String deserializerName = source.getDeserializer();
-            Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
-
             connections.put(channelUri, holder);
             Subscription subscription = nats.subscribe(topic, message -> {
-                Object body = deserializer != null ? deserializer.apply(message.getBody()) : message.getBody();
-                connection.getEventStream().getHeadHandler().handle(body, false);
+                connection.getEventStream().getHeadHandler().handle(message.getBody(), false);
             });
 
             // set the closeable callback
