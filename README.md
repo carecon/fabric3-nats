@@ -33,7 +33,7 @@ The NATS monitor appender is configured as follows in the Fabric3 systemConfig.x
 ```
 
 The 'hosts' attribute is a comma-separated list of NATS broker addresses (if not specified, the default NATS localhost address will be used). The hosts
-attribute can also accept environment variables in the form: ${var1}. The JVM properties will first be searched followed by OS environment variables.
+attribute can also accept environment variables in the form: ${var1}. JVM properties will first be searched followed by OS environment variables.
 
 The 'topic' attribute is optional. If it is not set, the topic will default to 'fabric3'. If it is set to '#domain' the topic will be the the Fabric3 domain
 name appended with the runtime name as in 'domain.vm'.
