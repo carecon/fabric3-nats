@@ -36,6 +36,11 @@ attribute can also accept environment variables in the form: ${var1}. The JVM pr
 The 'topic' attribute is optional. If it is not set, the topic will default to 'fabric3'. If it is set to '#domain' the topic will be the the Fabric3 domain
 name appended with the runtime name as in 'domain.vm'.
 
+
+The NATS binding supports extensible de/serializers. A de/serializer is a component that implements java.util.Function and take or return a String (the message
+payload type supported by NATS). De/serializers are configured on the NATS Binding by setting the component name. For an example, see JsonSerializer and
+JsonDeserializer in the test-nats module.
+
 License
 -------------------------
 Licensed under the Apache 2.0 License (http://fabric3.org/license.html)
