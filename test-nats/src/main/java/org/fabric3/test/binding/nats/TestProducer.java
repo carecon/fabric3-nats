@@ -18,7 +18,11 @@ public class TestProducer {
         Nats nats = connector.connect();
         Thread.sleep(2000);
         System.out.println(nats.isConnected());
-        nats.publish("control.domain.vm", "{\"type\":\"control::runtime::heartbeat\", \"id\":\"123\", \"replyTo\":\"domain.vm\"}");
-//        nats.publish("control.domain.vm", "{\"type\":\"control::runtime::shutdown\"}");
+        for (int i = 0; i < 1; i++) {
+            System.out.println(i);
+            nats.publish("control.domain.vm", "{\"type\":\"control::runtime::heartbeat\", \"id\":\"123\"}");
+            Thread.sleep(10);
+        }
+        // nats.publish("control.domain.vm", "{\"type\":\"control::runtime::shutdown\"}");
     }
 }

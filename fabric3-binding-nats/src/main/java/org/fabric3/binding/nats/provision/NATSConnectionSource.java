@@ -25,7 +25,6 @@ public class NATSConnectionSource extends PhysicalConnectionSource {
         return channelUri;
     }
 
-    @Override
     public String getSourceId() {
         return channelUri + "_Nats_source";
     }
