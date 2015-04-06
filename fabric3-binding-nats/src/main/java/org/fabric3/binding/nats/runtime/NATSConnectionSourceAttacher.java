@@ -37,6 +37,7 @@ public class NATSConnectionSourceAttacher implements SourceConnectionAttacher<NA
             Function deserializer = deserializerName != null ? InstanceResolver.getInstance(deserializerName, info, cm) : null;
             connection.getEventStream().addHandler(0, new EventStreamHandler() {
                 private EventStreamHandler next;
+                @SuppressWarnings("unchecked")
                 public void handle(Object message, boolean batch) {
                     Object body = deserializer != null ? deserializer.apply(message) : message;
                     next.handle(body, batch);

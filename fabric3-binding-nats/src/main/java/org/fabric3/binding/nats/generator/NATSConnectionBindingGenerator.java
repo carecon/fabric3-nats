@@ -29,8 +29,8 @@ public class NATSConnectionBindingGenerator implements ConnectionBindingGenerato
         String defaultTopic = natsBinding.getDefaultTopic();
 
         NATSData natsData = generateData(natsBinding);
-
-        return new NATSConnectionSource(channelUri, defaultTopic, natsData);
+        String consumerId = consumer.getUri().toString();
+        return new NATSConnectionSource(consumer.getUri(), channelUri, consumerId, defaultTopic, natsData);
     }
 
     public PhysicalConnectionTarget generateConnectionTarget(LogicalProducer producer, LogicalBinding<NATSBinding> binding, DeliveryType deliveryType) {
@@ -40,7 +40,7 @@ public class NATSConnectionBindingGenerator implements ConnectionBindingGenerato
 
         NATSData natsData = generateData(natsBinding);
 
-        return new NATSConnectionTarget(channelUri, defaultTopic, natsData);
+        return new NATSConnectionTarget(producer.getUri(), channelUri, defaultTopic, natsData);
     }
 
     private NATSData generateData(NATSBinding binding) {

@@ -12,7 +12,8 @@ public class NATSConnectionTarget extends PhysicalConnectionTarget {
     private String defaultTopic;
     private NATSData data;
 
-    public NATSConnectionTarget(URI channelUri, String defaultTopic, NATSData data) {
+    public NATSConnectionTarget(URI uri, URI channelUri, String defaultTopic, NATSData data) {
+        setUri(uri);
         this.channelUri = channelUri;
         this.defaultTopic = defaultTopic;
         this.data = data;

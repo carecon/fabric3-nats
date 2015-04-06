@@ -3,14 +3,16 @@ package org.fabric3.binding.nats.runtime;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import nats.client.Message;
+import nats.client.MessageHandler;
 import nats.client.Nats;
 import nats.client.NatsConnector;
 import nats.client.Subscription;
@@ -78,6 +80,12 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         }
     }
 
+//    *******************************************************************
+//
+//    1. Subscriptions to same channel not working
+//    2. DeSerializers need to be added to FanoutHandler in NATSConnectioManager
+//    **********************************************************************
+
     @SuppressWarnings("unchecked")
     public void subscribe(NATSConnectionSource source, ChannelConnection connection) {
         URI channelUri = source.getChannelUri();
@@ -95,25 +103,23 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
             holder.counter++;
         }
         nats = holder.delegate;
-
-        if (!exists || !holder.topics.contains(topic)) {
+        //         this is wrong --> need to chache original message handler created in subscribe and attah the head handler for each connection to it
+        if (!exists || !holder.topics.containsKey(topic)) {
             // Only create a subscription if one does not exist; otherwise targets will receive duplicate messages as multiple subscriptions will feed
             // into the channel event stream
             connections.put(channelUri, holder);
-            Subscription subscription = nats.subscribe(topic, message -> {
-                connection.getEventStream().getHeadHandler().handle(message.getBody(), false);
-            });
+            FanoutHandler messageHandler = new FanoutHandler(source.getConsumerId(), connection);
+            Subscription subscription = nats.subscribe(topic, messageHandler);
 
             // set the closeable callback
             connection.setCloseable(() -> {
                 subscription.close();
                 release(channelUri, topic);
             });
-            holder.topics.add(topic);
+            holder.topics.put(topic, messageHandler);
         } else {
-            connection.setCloseable(() -> {
-                release(channelUri, topic);
-            });
+            holder.topics.get(topic).connections.add(new ConnectionPair(source.getConsumerId(), connection));
+            connection.setCloseable(() -> release(channelUri, topic));
         }
     }
 
@@ -196,12 +202,37 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         NatsWrapper delegate;
         int counter = 1;
         String topic;
-        Set<String> topics = new HashSet<>();
+        Map<String, FanoutHandler> topics = new ConcurrentHashMap<>();
 
         public Holder(NatsWrapper delegate, String topic) {
             this.delegate = delegate;
             this.topic = topic;
         }
 
+    }
+
+    private class FanoutHandler implements MessageHandler {
+        List<ConnectionPair> connections = new CopyOnWriteArrayList<>();
+
+        public FanoutHandler(String consumerId, ChannelConnection connection) {
+            this.connections.add(new ConnectionPair(consumerId, connection));
+        }
+
+        public void onMessage(Message message) {
+            for (ConnectionPair pair : connections) {
+                pair.connection.getEventStream().getHeadHandler().handle(message.getBody(), false);
+            }
+        }
+
+    }
+
+    private class ConnectionPair {
+        String consumerId;
+        ChannelConnection connection;
+
+        public ConnectionPair(String consumerId, ChannelConnection connection) {
+            this.consumerId = consumerId;
+            this.connection = connection;
+        }
     }
 }
