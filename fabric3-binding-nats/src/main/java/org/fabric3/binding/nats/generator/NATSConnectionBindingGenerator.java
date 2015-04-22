@@ -7,7 +7,7 @@ import org.fabric3.api.binding.nats.model.NATSBinding;
 import org.fabric3.binding.nats.provision.NATSConnectionSource;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
 import org.fabric3.binding.nats.provision.NATSData;
-import org.fabric3.spi.domain.generator.channel.ConnectionBindingGenerator;
+import org.fabric3.spi.domain.generator.ConnectionBindingGenerator;
 import org.fabric3.spi.model.instance.LogicalBinding;
 import org.fabric3.spi.model.instance.LogicalConsumer;
 import org.fabric3.spi.model.instance.LogicalProducer;
