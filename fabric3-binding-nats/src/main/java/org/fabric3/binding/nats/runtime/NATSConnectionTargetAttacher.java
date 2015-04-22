@@ -6,7 +6,7 @@ import nats.client.Nats;
 import org.fabric3.api.annotation.wire.Key;
 import org.fabric3.api.host.runtime.HostInfo;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
-import org.fabric3.spi.container.builder.component.TargetConnectionAttacher;
+import org.fabric3.spi.container.builder.TargetConnectionAttacher;
 import org.fabric3.spi.container.channel.ChannelConnection;
 import org.fabric3.spi.container.component.ComponentManager;
 import org.fabric3.spi.model.physical.PhysicalConnectionSource;

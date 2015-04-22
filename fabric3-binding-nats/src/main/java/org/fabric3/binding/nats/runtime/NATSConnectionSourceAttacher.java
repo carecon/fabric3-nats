@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.fabric3.api.annotation.wire.Key;
 import org.fabric3.api.host.runtime.HostInfo;
 import org.fabric3.binding.nats.provision.NATSConnectionSource;
-import org.fabric3.spi.container.builder.component.SourceConnectionAttacher;
+import org.fabric3.spi.container.builder.SourceConnectionAttacher;
 import org.fabric3.spi.container.channel.ChannelConnection;
 import org.fabric3.spi.container.channel.EventStreamHandler;
 import org.fabric3.spi.container.component.ComponentManager;

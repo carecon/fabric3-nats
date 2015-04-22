@@ -17,12 +17,19 @@ public class TestProducer {
         connector.addHost("nats://localhost:4222");
         Nats nats = connector.connect();
         Thread.sleep(2000);
-        System.out.println(nats.isConnected());
         for (int i = 0; i < 1; i++) {
-            System.out.println(i);
-            nats.publish("control.domain.vm", "{\"type\":\"control::runtime::heartbeat\", \"id\":\"123\"}");
+            nats.publish("domain.notification",
+                         "{\"type\":\"notification\", \"priority\":\"NORMAL\", \"detail\":\"Shutdown in 10 minutes\", " + "\"notificationId\":\"1\"}");
             Thread.sleep(10);
         }
+        nats.publish("domain.notification",
+                     "{\"type\":\"notification\", \"priority\":\"HIGH\", \"detail\":\"Repository updated\", " + "\"notificationId\":\"1\"}");
+
+        //        for (int i = 0; i < 1; i++) {
+        //            System.out.println(i);
+        //            nats.publish("control.domain.vm", "{\"type\":\"control::runtime::heartbeat\", \"id\":\"123\"}");
+        //            Thread.sleep(10);
+        //        }
         // nats.publish("control.domain.vm", "{\"type\":\"control::runtime::shutdown\"}");
     }
 }

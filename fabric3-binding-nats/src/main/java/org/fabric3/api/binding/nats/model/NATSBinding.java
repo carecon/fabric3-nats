@@ -96,23 +96,23 @@ public class NATSBinding extends Binding {
         hosts.add(host);
     }
 
-     void setHosts(List<String> hosts) {
+    void setHosts(List<String> hosts) {
         this.hosts = hosts;
     }
 
-     void setAutomaticReconnect(boolean automaticReconnect) {
+    void setAutomaticReconnect(boolean automaticReconnect) {
         this.automaticReconnect = automaticReconnect;
     }
 
-     void setReconnectWaitTime(long reconnectWaitTime) {
+    void setReconnectWaitTime(long reconnectWaitTime) {
         this.reconnectWaitTime = reconnectWaitTime;
     }
 
-     void setPedantic(boolean pedantic) {
+    void setPedantic(boolean pedantic) {
         this.pedantic = pedantic;
     }
 
-     void setMaxFrameSize(int maxFrameSize) {
+    void setMaxFrameSize(int maxFrameSize) {
         this.maxFrameSize = maxFrameSize;
     }
 }

@@ -20,7 +20,7 @@ import org.fabric3.api.host.Fabric3Exception;
 import org.fabric3.binding.nats.provision.NATSConnectionSource;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
 import org.fabric3.binding.nats.provision.NATSData;
-import org.fabric3.spi.container.builder.component.DirectConnectionFactory;
+import org.fabric3.spi.container.builder.DirectConnectionFactory;
 import org.fabric3.spi.container.channel.ChannelConnection;
 import org.fabric3.spi.util.Cast;
 import org.oasisopen.sca.annotation.Destroy;
