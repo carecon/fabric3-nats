@@ -31,7 +31,7 @@ fabric3Test {
     shared group: 'com.github.cloudfoundry-community', name: 'nats-client', version: natsVersion
 
     extension group: fabric3Group, name: 'fabric3-monitor-spi', version: version
-    extension group: fabric3Group, name: 'fabric3-databinding-json', version: version
+//    extension group: fabric3Group, name: 'fabric3-databinding-json', version: version
     extension group: fabric3Group, name: 'fabric3-binding-nats', version: version
 
 
