@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Fabric3Runner.class)
 public class TestClient {
-    private static final CountDownLatch RECEIVE_LATCH = new CountDownLatch(2);
-    private static final CountDownLatch SUBSCRIBE_LATCH = new CountDownLatch(2);
-    private static final CountDownLatch SUBSCRIPTION_LATCH = new CountDownLatch(2);
-    private static final CountDownLatch DYNAMIC_LATCH = new CountDownLatch(2);
+    private static final CountDownLatch RECEIVE_LATCH = new CountDownLatch(1);
+    private static final CountDownLatch SUBSCRIBE_LATCH = new CountDownLatch(1);
+    private static final CountDownLatch SUBSCRIPTION_LATCH = new CountDownLatch(1);
+    private static final CountDownLatch DYNAMIC_LATCH = new CountDownLatch(1);
 
     @Producer(target = "NATSChannel")
     protected Nats producer;
@@ -36,6 +36,7 @@ public class TestClient {
 
     @Consumer(source = "NATSChannel")
     public void receive(String message) {
+        System.out.println("Received on message default subscribe:" + message);
         RECEIVE_LATCH.countDown();
     }
 
@@ -47,19 +48,25 @@ public class TestClient {
             return;
         }
         Object handle = channelContext.subscribe(String.class, "id", "test", m -> {
-            System.out.println("Received in subscribe:" + m);
+            System.out.println("Received in 'test' subscribe:" + m);
             SUBSCRIBE_LATCH.countDown();
         });
 
         subscription.addMessageHandler((m) -> {
-            System.out.println("Received in injected subscription:" + m);
+            System.out.println("Received in injected default subscription:" + m);
             SUBSCRIPTION_LATCH.countDown();
         });
 
         Subscription dynamicSubscription = channelContext.getConsumer(Subscription.class, "test");
         dynamicSubscription.addMessageHandler((m) -> {
-            System.out.println("Received in dynamic subscription:" + m);
+            System.out.println("Received in dynamic 'test' subscription:" + m);
             DYNAMIC_LATCH.countDown();
+        });
+
+        Subscription dynamicSubscription2 = channelContext.getConsumer(Subscription.class, "test2");
+        dynamicSubscription2.addMessageHandler((m) -> {
+            System.out.println("Should NOT receive dynamic subscription:" + m);
+            throw new AssertionError("Test topic failed");
         });
 
         channel.publish("\"hello\"");
@@ -74,5 +81,6 @@ public class TestClient {
         subscription.close();
 
         System.out.println("Done");
+        Thread.sleep(5000);   // avoid async shutdown errors
     }
 }

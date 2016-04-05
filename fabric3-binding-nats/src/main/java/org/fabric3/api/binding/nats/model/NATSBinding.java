@@ -29,8 +29,10 @@ import org.fabric3.api.model.type.component.Binding;
  * Binds a channel to a NATS cluster.
  */
 public class NATSBinding extends Binding {
+    public static final String DEFAULT_TOPIC = "_fabric3";
+
     private List<String> hosts = new ArrayList<>();
-    private String defaultTopic;
+    private String defaultTopic = DEFAULT_TOPIC;
     private String deserializer;
     private String serializer;
 

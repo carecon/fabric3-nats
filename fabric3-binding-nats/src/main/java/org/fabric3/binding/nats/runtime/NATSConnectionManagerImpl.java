@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +15,7 @@ import nats.client.MessageHandler;
 import nats.client.Nats;
 import nats.client.NatsConnector;
 import nats.client.Subscription;
+import org.fabric3.api.binding.nats.model.NATSBinding;
 import org.fabric3.api.host.Fabric3Exception;
 import org.fabric3.binding.nats.provision.NATSConnectionSource;
 import org.fabric3.binding.nats.provision.NATSConnectionTarget;
@@ -63,7 +63,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
     }
 
     public void release(URI channelUri, String topic) {
-        release(channelUri, topic, true);
+        release(channelUri, true);
     }
 
     public <T> T createDirectConsumer(Class<T> type, NATSConnectionSource source) {
@@ -79,12 +79,6 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
             throw new Fabric3Exception("Invalid consumer type: " + type.getName());
         }
     }
-
-//    *******************************************************************
-//
-//    1. Subscriptions to same channel not working
-//    2. DeSerializers need to be added to FanoutHandler in NATSConnectioManager
-//    **********************************************************************
 
     @SuppressWarnings("unchecked")
     public void subscribe(NATSConnectionSource source, ChannelConnection connection) {
@@ -103,44 +97,37 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
             holder.counter++;
         }
         nats = holder.delegate;
-        //         this is wrong --> need to chache original message handler created in subscribe and attah the head handler for each connection to it
-        if (!exists || !holder.topics.containsKey(topic)) {
-            // Only create a subscription if one does not exist; otherwise targets will receive duplicate messages as multiple subscriptions will feed
-            // into the channel event stream
-            connections.put(channelUri, holder);
-            FanoutHandler messageHandler = new FanoutHandler(source.getConsumerId(), connection);
-            Subscription subscription = nats.subscribe(topic, messageHandler);
 
-            // set the closeable callback
-            connection.setCloseable(() -> {
-                subscription.close();
-                release(channelUri, topic);
-            });
-            holder.topics.put(topic, messageHandler);
-        } else {
-            holder.topics.get(topic).connections.add(new ConnectionPair(source.getConsumerId(), connection));
-            connection.setCloseable(() -> release(channelUri, topic));
-        }
+        connections.put(channelUri, holder);
+        FanoutHandler messageHandler = new FanoutHandler(source.getConsumerId(), connection);
+        Subscription subscription = nats.subscribe(topic, messageHandler);
+
+        // set the closeable callback
+        connection.setCloseable(() -> {
+            subscription.close();
+            release(channelUri, topic);
+        });
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Supplier<T> getConnection(URI channelUri, URI attachUri, Class<T> type) {
+    public <T> Supplier<T> getConnection(URI channelUri, URI attachUri, Class<T> type, String topic) {
         // Nats is created by createDirectConsumer(..)
+        final String resolvedTopic = topic != null ? topic : NATSBinding.DEFAULT_TOPIC;
         if (Nats.class.isAssignableFrom(type)) {
             return () -> Cast.cast(connections.get(channelUri).delegate);
         } else if (Subscription.class.isAssignableFrom(type)) {
             Holder holder = connections.get(channelUri);
             return () -> {
-                Subscription subscription = holder.delegate.subscribe(holder.topic);
-                return Cast.cast(new SubscriptionWrapper(subscription, channelUri, holder.topic, this));
+                Subscription subscription = holder.delegate.subscribe(resolvedTopic);
+                return Cast.cast(new SubscriptionWrapper(subscription, channelUri, resolvedTopic, this));
             };
         } else {
             throw new Fabric3Exception("Invalid connection type: " + type.getName());
         }
     }
 
-    public <T> Supplier<T> getConnection(URI uri, URI attachUri, Class<T> type, String topic) {
-        return getConnection(uri, attachUri, type);
+    public <T> Supplier<T> getConnection(URI uri, URI attachUri, Class<T> type) {
+        return getConnection(uri, attachUri, type, null);
     }
 
     @SuppressWarnings("unchecked")
@@ -149,21 +136,17 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         NATSData natsData = target.getData();
         Nats nats = populateNats(connector, natsData);
         URI channelUri = target.getChannelUri();
-        String topic = target.getTopic() != null ? target.getTopic() : target.getDefaultTopic();
         NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
-        return new Holder(wrapper, topic);
+        return new Holder(wrapper);
     }
 
     private Holder createNats(NATSConnectionSource source) {
         NatsConnector connector = new NatsConnector();
-
         NATSData natsData = source.getData();
         Nats nats = populateNats(connector, natsData);
-
         URI channelUri = source.getChannelUri();
-        String topic = source.getTopic() != null ? source.getTopic() : source.getDefaultTopic();
         NatsWrapper wrapper = new NatsWrapper(nats, channelUri, this);
-        return new Holder(wrapper, topic);
+        return new Holder(wrapper);
     }
 
     private Nats populateNats(NatsConnector connector, NATSData natsData) {
@@ -181,7 +164,7 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         return connector.connect();
     }
 
-    private Nats release(URI channelUri, String topic, boolean shutdown) {
+    private Nats release(URI channelUri, boolean shutdown) {
         Holder holder = connections.get(channelUri);
         if (holder == null) {
             return null;
@@ -189,9 +172,6 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
         if (--holder.counter == 0) {
             if (shutdown) {
                 holder.delegate.close();
-            }
-            if (topic != null) {
-                holder.topics.remove(topic);
             }
             connections.remove(channelUri);
         }
@@ -201,12 +181,9 @@ public class NATSConnectionManagerImpl implements NATSConnectionManager, DirectC
     private class Holder {
         NatsWrapper delegate;
         int counter = 1;
-        String topic;
-        Map<String, FanoutHandler> topics = new ConcurrentHashMap<>();
 
-        public Holder(NatsWrapper delegate, String topic) {
+        public Holder(NatsWrapper delegate) {
             this.delegate = delegate;
-            this.topic = topic;
         }
 
     }

@@ -22,7 +22,7 @@ public class TestProvider {
         CompositeBuilder compositeBuilder = CompositeBuilder.newBuilder(QNAME);
         ChannelBuilder channelBuilder = ChannelBuilder.newBuilder("NATSChannel");
         NATSBindingBuilder bindingBuilder = NATSBindingBuilder.newBuilder();
-        bindingBuilder.defaultTopic("test");
+//        bindingBuilder.defaultTopic("test");
         bindingBuilder.serializer(JsonSerializer.class.getSimpleName());
         bindingBuilder.deserializer(JsonDeserializer.class.getSimpleName());
         NATSBinding binding = bindingBuilder.build();
