@@ -10,7 +10,7 @@ buildscript {
     }
 
     dependencies {
-        classpath group: 'org.fabric3.gradle', name: 'fabric3-test', version: pluginVersion
+        classpath group: fabric3GradleGroup, name: 'fabric3-test', version: fabric3GradleVersion
     }
 
 }

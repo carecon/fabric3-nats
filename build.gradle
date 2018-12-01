@@ -102,8 +102,8 @@ configure(deployProjects()) {
             }
         }
         dependencies {
-            classpath group: 'org.fabric3.gradle', name: 'fabric3-contribution', version: pluginVersion
-//            classpath group: 'org.fabric3.gradle', name: 'fabric3-test', version: pluginVersion
+            classpath group: fabric3GradleGroup, name: 'fabric3-contribution', version: fabric3GradleVersion
+//            classpath group: fabric3GradleGroup, name: 'fabric3-test', version: fabric3GradleVersion
 
         }
 
@@ -238,11 +238,6 @@ configure(deployProjects()) {
 
 }
 
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
-}
-
 /**
  * Forces setting of the POM packaging as may be over-written before uploading.
  * @param deployment the current deployment
@@ -276,3 +271,19 @@ private void setPomPackaging(MavenDeployment deployment, MavenPom pom) {
     transformer.transform(source, result);
 }
 
+// Version & group
+task('updateVersionInformationInFiles') {
+    doLast {
+        def files =  fileTree("$projectDir").filter { it.isFile() && it.name.equals('sca-contribution.xml') }.files
+        files.forEach {
+            def content = it.getText("UTF-8")
+                    .replaceAll("(<import.java package=\"org.fabric3[^\"]*\" version=\")([^\"]+)(\"/>)", "\$1$version\$3")
+                    .replaceAll("(<export.java package=\"org.fabric3[^\"]*\" version=\")([^\"]+)(\"/>)", "\$1$version\$3")
+            it.write(content, "UTF-8")
+        }
+    }
+}
+
+configure(deployProjects()) {
+    compileJava.dependsOn updateVersionInformationInFiles
+}
