@@ -6,7 +6,7 @@
               f3:description="NATS binding extension">
     <import.java package="org.fabric3.spi.*"/>
     <import.java package="org.fabric3.monitor.spi.*"/>
-    <export.java package="org.fabric3.api.binding.nats.*" version="3.1.0-SNAPSHOT"/>
+    <export.java package="org.fabric3.api.binding.nats.*" version="3.1.0"/>
 
     <f3:provides.capability name="monitor.appender"/>
 
